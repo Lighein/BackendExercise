@@ -71,14 +71,3 @@ async function postsVoteChange(){
 console.log(getAllPosts())
 // console.log(getTop())
 // console.log(postsVoteChange())
-
-// fetch('https://www.reddit.com/r/todayilearned/top.json?limit=100')
-// .then(response=>response.json())
-// .then(json=>console.log(json));
-
-///api/v1/collections/subreddit_collections
-//http://www.reddit.com/r/<subreddit>/search.json?restrict_sr=on&t=all
-//r/subreddit/new.json
-///r/mysubreddit/top/.json?count=20
-//https://www.reddit.com/r/todayilearned/top.json?limit=100' <- works
-//
