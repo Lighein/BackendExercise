@@ -1,73 +1,80 @@
-let lastExecutionTop = [];
-let currExecutionAll = [];
-let lastExecutionAll = [];
-let posts = {};
+let myStorage = window.localStorage;
 
-async function getAll(){
-  let url = 'https://www.reddit.com/r/javascript.json';
-  try{
-    let response = await fetch(url);
-    let resp = await response.json();
-    return resp
-  } catch (error){
-    console.log(error)
+function getAll(){
+  return async()=>{
+    let url = 'https://www.reddit.com/r/javascript.json';
+    try{
+      let response = await fetch(url);
+      let resp = await response.json();
+      localStorage.setItem('getAll', JSON.stringify(resp["data"]["children"]));
+    } catch (error){
+      console.log(error)
+    }
   }
 }
 
 function getAllPosts() {
-  let response = getAll();
-  lastExecutionAll = response["data"]["children"];
-    if (!lastExecutionAll.length){
-      for (let i = 0; i < lastExecutionAll.length; i++){
-        let id = lastExecutionAll[i]["data"]["id"]
-        posts[id] = lastExecutionAll[i]
+  getAll();
+  let currExecutionAll = JSON.parse(localStorage.getItem('getAll'));
+  let posts = JSON.parse(localStorage.getItem('posts')) || [];
+    if (!posts.length){
+      for (let i = 0; i < currExecutionAll.length; i++){
+        let id = currExecutionAll[i]["data"]["id"]
+        posts[id] = currExecutionAll[i]
       }
-      return lastExecutionAll;
+      localStorage.setItem('posts', JSON.stringify(posts));
+      return currExecutionAll;
     } else {
       let arr = [];
-      for (let i = 0; i <lastExecutionAll.length; i++){
-        let id = lastExecutionAll[i]["data"]["id"]
+      for (let i = 0; i <currExecutionAll.length; i++){
+        let id = currExecutionAll[i]["data"]["id"]
         if (!posts[id]){
-          arr.push(lastExecutionAll[i]);
+          arr.push(currExecutionAll[i]);
         }
       }
+      localStorage.setItem('posts', JSON.stringify(posts));
       return arr
     }
 }
     
 
-async function getTop(){
-  let url = 'https://www.reddit.com/r/javascript/top.json';
-  try{
-    let response = await fetch(url);
-    let resp = await response.json();
-    lastExecutionTop = resp["data"]["children"];
-    if (lastExecutionTop.length<=75) return [];
-    return lastExecutionTop.slice(75)
-  } catch (error){
-    console.log(error)
+function getTop(){
+  return async() =>{
+    let url = 'https://www.reddit.com/r/javascript/top.json';
+    try{
+      let response = await fetch(url)
+      let resp = await response.json();
+      let currExec = resp["data"]["children"];
+      return currExec.slice(5);
+    } catch (error){
+      console.log(error)
+    }
   }
 }
 
+const printGTP = async () => {
+  const ans = await getTop()();
+  console.log("Out of top 5", ans);
+}; 
 
-async function postsVoteChange(){
-  let url = 'https://www.reddit.com/r/javascript.json';
+function postsVoteChange(){
   try{
-    let response = await fetch(url);
-    let resp = await response.json();
-    currExecutionAll = resp["data"]["children"];
+    getAll(); 
+    let currExecutionAll = JSON.parse(localStorage.getItem('getAll'));
     let arr = [];
+    let posts = JSON.parse(localStorage.getItem('posts')) || [];
     for (let i = 0; i < currExecutionAll.length; i++){
       let id = currExecutionAll[i]["data"]["id"]
-      if (lastExecutionAll[id]){
-        arr.push([id, currExecutionAll[i]["data"]["score"]-lastExecutionAll[id]["score"]]);
+      if (posts[id]){
+        arr.push([id, currExecutionAll[i]["data"]["score"]-(posts[id]["score"] || currExecutionAll[i]["data"]["score"])]);
       }
     }
+    return arr
   } catch (error){
     console.log(error)
   }
 }
 
-console.log(getAllPosts())
-// console.log(getTop())
-// console.log(postsVoteChange())
+console.log("All", getAllPosts());
+printGTP();
+console.log("Vote changes", postsVoteChange())
